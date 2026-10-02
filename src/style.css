@@ -43,8 +43,8 @@
     --nav-bg: rgba(22, 23, 29, 0.75);
 
     --intro-bg: #16171d;
-    --projects-bg: #1b1729;
-    --skills-bg: #141b2d;
+    --projects-bg: #241f38;
+    --skills-bg: #24304e;
     --resume-bg: #0f121d;
   }
 }
@@ -281,11 +281,43 @@ ol {
   font-size: 1.15rem;
 }
 
+.social-links {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.social-link {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  color: var(--text-h);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  transition:
+    color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.2s;
+}
+
+.social-link:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 25%, transparent);
+  transform: translateY(-2px);
+}
+
 @media (max-width: 700px) {
   .intro {
     flex-direction: column;
     gap: 2rem;
     text-align: center;
+  }
+
+  .social-links {
+    justify-content: center;
   }
 }
 
@@ -307,6 +339,49 @@ ol {
 
 #resume {
   background: var(--resume-bg);
+}
+
+/* Blended backgrounds, switched on by `blendSections` in src/settings.js.
+   Each section keeps its own color everywhere except a short band (--blend-size) at its top and
+   bottom edges. In that band it fades only halfway, to a 50/50 mix with the neighbouring section,
+   and the neighbour fades from that same mix back to its own color, so the edge is seamless. */
+:root {
+  --blend-size: 8rem;
+  --intro-projects-mix: color-mix(in srgb, var(--intro-bg), var(--projects-bg));
+  --projects-skills-mix: color-mix(in srgb, var(--projects-bg), var(--skills-bg));
+  --skills-resume-mix: color-mix(in srgb, var(--skills-bg), var(--resume-bg));
+}
+
+.blend-sections .intro {
+  background: linear-gradient(
+    to bottom,
+    var(--intro-bg) calc(100% - var(--blend-size)),
+    var(--intro-projects-mix)
+  );
+}
+
+.blend-sections #projects {
+  background: linear-gradient(
+    to bottom,
+    var(--intro-projects-mix),
+    var(--projects-bg) var(--blend-size),
+    var(--projects-bg) calc(100% - var(--blend-size)),
+    var(--projects-skills-mix)
+  );
+}
+
+.blend-sections #skills {
+  background: linear-gradient(
+    to bottom,
+    var(--projects-skills-mix),
+    var(--skills-bg) var(--blend-size),
+    var(--skills-bg) calc(100% - var(--blend-size)),
+    var(--skills-resume-mix)
+  );
+}
+
+.blend-sections #resume {
+  background: linear-gradient(to bottom, var(--skills-resume-mix), var(--resume-bg) var(--blend-size));
 }
 
 .section-title {
@@ -341,16 +416,6 @@ ol {
   font-size: 0.95rem;
 }
 
-.card-link {
-  margin-top: auto;
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.card-link:hover {
-  text-decoration: underline;
-}
-
 /* ---------- Projects ---------- */
 
 .subsection + .subsection {
@@ -365,9 +430,255 @@ ol {
 }
 
 .project-card {
+  position: relative;
   height: 100%;
   /* Solid background so overlapping carousel cards don't show through each other */
   background: linear-gradient(var(--card-bg), var(--card-bg)), var(--projects-bg);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.project-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-top: auto;
+  padding-top: 0.25rem;
+}
+
+/* "More details" button; its ::after covers the whole card so clicking anywhere opens the pop-up */
+.card-open {
+  padding: 0;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--text-h);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.card-open::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.card-open:focus-visible {
+  outline: none;
+}
+
+.project-card:has(.card-open:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ---------- Project details pop-up ---------- */
+
+html.modal-open {
+  overflow: hidden;
+}
+
+.project-dialog {
+  width: min(40rem, calc(100% - 2rem));
+  max-height: 85vh;
+  max-height: 85svh;
+  padding: 0;
+  color: var(--text);
+  background: linear-gradient(var(--card-bg), var(--card-bg)), var(--projects-bg);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.project-dialog[open] {
+  animation: dialog-in 0.25s ease-out;
+}
+
+.project-dialog::backdrop {
+  background: rgba(5, 6, 12, 0.65);
+  backdrop-filter: blur(4px);
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+}
+
+/* Scrolls inside the pop-up if the content is taller than the screen */
+.project-dialog-inner {
+  max-height: inherit;
+  overflow-y: auto;
+  padding: 1.75rem;
+}
+
+.project-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Sits over the top-right corner and stays put while the content scrolls */
+.project-dialog-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 1;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+  color: var(--text-h);
+  background: var(--nav-bg);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.project-dialog-close:hover {
+  border-color: var(--accent);
+}
+
+.project-dialog-title {
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: var(--text-h);
+}
+
+.project-highlights {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  font-size: 0.95rem;
+}
+
+.project-highlights li {
+  position: relative;
+  padding-left: 1.25rem;
+}
+
+.project-highlights li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* Image gallery in the pop-up: all images sit in the same spot and the active one fades in */
+.gallery {
+  position: relative;
+}
+
+.gallery-track {
+  display: grid;
+  aspect-ratio: 16 / 9;
+  border-radius: 0.6rem;
+  overflow: hidden;
+  background: #000;
+}
+
+.gallery-image {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  /* Shows the whole image (no cropping), so screenshots of any shape fit */
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.gallery-image[data-active] {
+  opacity: 1;
+}
+
+.gallery-arrow {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: grid;
+  place-items: center;
+  font-size: 1.1rem;
+  color: #fff;
+  background: rgba(10, 10, 20, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: border-color 0.2s;
+}
+
+.gallery-arrow:hover {
+  border-color: var(--accent);
+}
+
+.gallery-arrow-prev {
+  left: 0.75rem;
+}
+
+.gallery-arrow-next {
+  right: 0.75rem;
+}
+
+.gallery-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.gallery-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--border);
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+
+.gallery-dot[data-active] {
+  background: var(--accent);
+  transform: scale(1.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gallery-image {
+    transition: none;
+  }
+}
+
+.project-dialog .button {
+  align-self: flex-start;
+  margin-top: 0.5rem;
+  padding: 0.45rem 1.1rem;
+  font-size: 0.85rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-dialog[open] {
+    animation: none;
+  }
 }
 
 .project-image {
@@ -502,29 +813,75 @@ ol {
 
 .skill-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+  gap: 2rem 1rem;
+}
+
+/* On wide screens, a fixed 7 columns so every subsection's icons line up */
+@media (min-width: 1000px) {
+  .skill-grid {
+    grid-template-columns: repeat(7, 1fr);
+  }
 }
 
 .skill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.skill-circle {
+  width: 5.5rem;
+  aspect-ratio: 1;
   display: grid;
   place-items: center;
-  padding: 1rem 0.75rem;
-  text-align: center;
-  color: var(--text-h);
+  border-radius: 50%;
   background: var(--card-bg);
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
   transition:
     border-color 0.2s,
     box-shadow 0.2s,
     transform 0.2s;
 }
 
-.skill:hover {
+.skill-logo {
+  width: 55%;
+  height: 55%;
+  object-fit: contain;
+}
+
+/* Dark logos (marked `invert: true` in skills.js) turn white on the dark background */
+@media (prefers-color-scheme: dark) {
+  .skill-logo-invert {
+    filter: invert(1);
+  }
+}
+
+.skill-name {
+  font-size: 0.95rem;
+  color: var(--text-h);
+}
+
+.skill:hover .skill-circle {
   border-color: var(--accent);
   box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 25%, transparent);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+}
+
+@media (max-width: 600px) {
+  .skill-grid {
+    grid-template-columns: repeat(auto-fill, minmax(5rem, 1fr));
+  }
+
+  .skill-circle {
+    width: 4.5rem;
+  }
+
+  .skill-name {
+    font-size: 0.85rem;
+  }
 }
 
 /* ---------- Resume ---------- */
@@ -553,4 +910,28 @@ ol {
 .button-outline {
   background: transparent;
   color: var(--accent);
+}
+
+/* Lets the preview below size itself from the section's width (cqw units) */
+#resume {
+  container-type: inline-size;
+}
+
+/* The resume shown right on the page, tall enough to show the whole page without scrolling:
+   width × 1.294 (a US Letter page's height-to-width ratio) + room for the PDF viewer's toolbar */
+.resume-preview {
+  display: block;
+  width: 100%;
+  height: calc(100cqw * 1.294 + 80px);
+  margin-top: 2.5rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: #fff;
+}
+
+/* Phones don't display PDFs well inside a page, so they just get the buttons */
+@media (max-width: 700px) {
+  .resume-preview {
+    display: none;
+  }
 }
