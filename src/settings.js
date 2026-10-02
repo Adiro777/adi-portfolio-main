@@ -10,5 +10,5 @@ export const settings = {
   // true:  on page load, the photo appears in the center, slides into place, then the text fades in
   //        (scrolling is locked until it finishes).
   // false: the intro shows up fully right away, with no animation.
-  introAnimation: false,
+  introAnimation: true,
 }
